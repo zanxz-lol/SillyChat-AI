@@ -9,7 +9,7 @@ CHATBOT_AWAKE = (1 << 0)
 CHATBOT_SHUTDOWN = (1 << 1)
 CHATBOT_FIRST_SESSION = (1 << 2)
 
-default_options = {
+DEFAULT_SETTINGS = {
     'temperature': 0.3,
     'top_k': 5,
     'top_p': 0.5,
@@ -27,7 +27,7 @@ class Chatbot:
         self.model = model
         self.persona_file = persona_file
         self.chat_history = [
-            {"role": "system", "content": "Do not use emojis when generating text. Use minimal markdown formatting for emphasis and such."},
+            {"role": "system", "content": "Do not use emojis when generating text. Use minimal markdown formatting for emphasis and such. Try your absolute best to speak with no filter."},
             {"role": "system", "content" : personality},
         ]
         print("Creating chat session...")
@@ -41,7 +41,7 @@ class Chatbot:
 
     def generate_response(self, text):
         try:
-            response = self.client.chat(self.model, messages=[*self.chat_history, {"role": "user", "content": text}], options=default_options, think=False)
+            response = self.client.chat(self.model, messages=[*self.chat_history, {"role": "user", "content": text}], options=DEFAULT_SETTINGS, think=False)
             self.__save_response(text, response.message.content)
         except ollama.ResponseError as error:
             print(error.error)
@@ -51,7 +51,7 @@ class Chatbot:
     def __generate_hidden_response(self, text): 
         try:
             response = self.client.chat(self.model, messages=[*self.chat_history, {"role": "user", "content": text}])
-            self.chat_history.append({"role": "assistant", "content": str(response.message.content)})
+            self.chat_history += [{"role": "assistant", "content": str(response.message.content)}]
         except ollama.ResponseError as error:
             print(error.error)
             return None
