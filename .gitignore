@@ -1,3 +1,4 @@
+# Chat logs
 *.json
-*.pyc
+# Python cache
 __pycache__/
