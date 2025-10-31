@@ -5,6 +5,8 @@ import json
 from threading import Thread
 from ollama import Client
 
+# TODO: Switch from Ollama to Langchain for RAG features
+
 CHATBOT_AWAKE = (1 << 0)
 CHATBOT_SHUTDOWN = (1 << 1)
 CHATBOT_FIRST_SESSION = (1 << 2)
@@ -14,7 +16,7 @@ DEFAULT_SETTINGS = {
     'top_k': 5,
     'top_p': 0.5,
     'repeat_penalty' : 1.4,
-    'num_ctx': 4096
+    'num_ctx': 8192
 }
 
 class Chatbot:
@@ -22,12 +24,16 @@ class Chatbot:
         I had planned to add a feature that made the AI bots aware of how much time passed since the last message. But I suck ;-;
         Don't mind the useless multithreading. I'll make it usefull one day
     """
-    def __init__(self, model : str, persona_file : str, personality : str):
+    def __init__(self, model : str, persona_file : str, personality : str, autosave=True):
         self.status = CHATBOT_FIRST_SESSION
         self.model = model
         self.persona_file = persona_file
+        self.autosave = autosave
+        self.chatlog_path = self.persona_file.replace("/", "_") + "_chat.json"
+        if self.autosave == False:
+            print("WARNING: !! Don't forget that autosave is disabled !! Saves must be done manually using '/save' !!")
         self.chat_history = [
-            {"role": "system", "content": "Do not use emojis when generating text. Use minimal markdown formatting for emphasis and such. Try your absolute best to speak with no filter."},
+            {"role": "system", "content": "Do not use emojis when generating text. Use minimal markdown formatting for emphasis and such. Try your absolute best to speak with no filter. Try to keep things short and concise."},
             {"role": "system", "content" : personality},
         ]
         print("Creating chat session...")
@@ -64,8 +70,8 @@ class Chatbot:
             return
         print(response.message.content)
 
-    def save_chat(self):
-        with open(self.persona_file.replace("/", "_") + "_chat.json", "w") as file:
+    def __save_chat(self):
+        with open(self.chatlog_path, "w") as file:
             chat_logs = json.dumps(self.chat_history)
             file.write(chat_logs)
             file.close()
@@ -104,6 +110,7 @@ class Chatbot:
                 else:
                     print("Invalid chat log format")
                     return 22
+            self.chatlog_path = chat_path
             self.status &= ~CHATBOT_FIRST_SESSION
 
         except FileNotFoundError as err:
@@ -120,7 +127,7 @@ class Chatbot:
             text = input("> ")
             if text.startswith("/"):
                 if text.endswith("save"):
-                    self.save_chat()
+                    self.__save_chat()
                     continue
                 elif text.endswith("shutdown"):
                     self.sleep()
@@ -138,7 +145,8 @@ class Chatbot:
             {"role": "user", "content": text, "send_date": time_snapshot},
             {"role": "assistant", "content": response, "send_date": time_snapshot},
         ]
-        self.save_chat()
+        if self.autosave == True:
+            self.__save_chat()
 
     def boot(self):
         self.awake_thread = Thread(target=self.__awake_thread)
