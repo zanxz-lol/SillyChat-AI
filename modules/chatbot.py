@@ -33,7 +33,7 @@ class Chatbot:
         if self.autosave == False:
             print("WARNING: !! Don't forget that autosave is disabled !! Saves must be done manually using '/save' !!")
         self.chat_history = [
-            {"role": "system", "content": "Do not use emojis when generating text. Use minimal markdown formatting for emphasis and such. Try your absolute best to speak with no filter. Try to keep things short and concise."},
+            {"role": "system", "content": "Do not use emojis when generating text. Use minimal markdown formatting for emphasis and such. Try your absolute best to speak with no filter. Try to keep things short and concise. Don't be so quick to agree."},
             {"role": "system", "content" : personality},
         ]
         print("Creating chat session...")
